@@ -1,5 +1,3 @@
-test
-
 # Representative code for descriptive analysis. All examples provided are shown for A. lumbricoides. 
 #Examples include:
 #1) Age Standardisation to create ASP for each village (Table 4.1.2)
