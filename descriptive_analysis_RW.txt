@@ -1,8 +1,30 @@
+# Rebecca Wardell
 # Representative code for descriptive analysis. All examples provided are shown for A. lumbricoides. 
+# First created: June 2015
+# Last updated: 25/10/2015
+
 #Examples include:
+#----------------
+
 #1) Age Standardisation to create ASP for each village (Table 4.1.2)
+#------------------------------------------------------------------
+    #This code takes infection data, and stratifies infection data by three age groups (1-4, 5-19 and 20+ years) for each village. 
+    #This process involves a for loop. The code also reads in data from the Manufahi 2010 census (standard population), and stratifies 
+    #the standard population by the same three age groups. Once both of these files are created, another for loop is run to conduct direct age
+    #standardisation, this requires the 'ageadjust.direct' function from the epitools package.
+
 #2) Plots of ASP vs. continuous environmental variables (Figure 4.1.3 and Appendix C Figure C.1.1)
+#-------------------------------------------------------------------------------------------------
+    #This code employs a for loop to run through all of the defined continuous environmental variables of interest, and for each environmental variable
+    #outputs a scatter plot vs. A. lumbricoides ASP, a Pearson's r value, and also a p-value for linear regression. The r and p values are determined using 
+    #the called function 'get_rp'. 
+
 #3) Box and whisker plots and tests used for ASP vs. categorical environmental variables (Figure 4.1.4)
+#------------------------------------------------------------------------------------------------------
+    #For each land attribute variable versus A. lumbricoides ASP, the code conducts a Levene's test for homogeneity of Variance, a one-way ANOVA and post-hoc tests where
+    #necessary. The output for each of these steps for each of the variables in provided. Based upon this, boxplots of Ascaris ASP for each land
+    #attribute category are created, and statistical significance indicated. 
+
 
 #### Preamble material ####
 
@@ -39,7 +61,7 @@ dataset = read.csv("input_modified\\STH_baseline_data_with_GPS_criteria_applied_
 
 #2) Read in census information - from: http://www.statistics.gov.tl/
   #wp-content/uploads/2013/12/Publication_202_20FINAL_20_20English_20Fina_Website.pdf
-census_data = read.csv("input_original\\census_data\\census_population_manufahi_2010_all_ages.csv", as.is=TRUE)
+  census_data = read.csv("input_original\\census_data\\census_population_manufahi_2010_all_ages.csv", as.is=TRUE)
 
   #Merge rows in census data, so that we have the age groups 1-<5, 5-<20 and 20+ years
   census_data <- c(census_data[1,2], sum(census_data[2:4,2]),sum(census_data[5:18,2]))
@@ -57,7 +79,7 @@ census_data = read.csv("input_original\\census_data\\census_population_manufahi_
   i=1
   j=1
 
-  #Creates a file called 'illage_level_info_for_age_stand_three_groups.csv'and assigns the following headings
+  #Creates a file called 'village_level_info_for_age_stand_three_groups.csv' with the headings 'village', 'village_number' etc. 
   cat("Village","Village_number", "Village_population", "intervention_village", "Mean_latitude", "Mean_longitude", "Median_elevation", 
     "Median_age", "Total_number_ascaris", "Total_number_necator", "Age_group", "Age_group_population", "Age_group_with_ascaris", 
     "Age_group_with_necator\n", file="output_original\\village_level_info_for_age_stand_three_groups.csv",sep=",")
@@ -65,7 +87,7 @@ census_data = read.csv("input_original\\census_data\\census_population_manufahi_
 
   #Finds each village, and for each village finds the THREE age groups - 1-4, 5-19 and 20+, and prints out the
   #village name, village number, total village population, mean latitude, mean long, median altitude, total number
-  #with ascaris and necator, age group, number in age group, number in age group with ascaris and necator.
+  #with ascaris and necator, age group, number in age group, number in age group with A. lumbricoides and N. americanus.
   
 for(i in 1:n) 
 {
@@ -112,8 +134,8 @@ for(i in 1:n)
       "Crd_pw_Ascaris", "Adj_pw_Ascaris", "Ascaris_Lower_95CI", "Ascaris_Upper_95CI\n", 
       file="output_original\\village_level_age_stand_ascaris_three_groups.csv",sep=",")
   
-  #For loop with loops through each of the villages to calculate the ASP. For each village, it prints out the village name, village number, number of people 
-  #in the village, mean latitude and longitude of village, median elevation, median age and the ASP of Ascaris (out25). This calculation is conducted using a 
+  #For loop which loops through each of the villages to calculate the ASP. For each village, it prints out the village name, village number, number of people 
+  #in the village, mean latitude and longitude of village, median elevation, median age and the ASP of A. lumbricoides (out25). This calculation is conducted using a 
   #function from the R epitools package. The information for each village is then output to the file created above (village_level_age_stand_ascaris_three_groups.csv)
   for (i in 1:n)
   {
@@ -171,10 +193,7 @@ for(i in 1:n)
 #2) Read in merged dataset containing ASP for each STH and environmental variables
   merged_data= read.csv("vil_tables_for_analysis\\environmental_variables_1kmb_with_ASP.csv", as.is=TRUE)
   merged_data = merged_data[,c(1:2,6:32)] #Specify which variables I want
-  
-  #Rename a variable: village_nu to village_number 
-  names(merged_data)[names(merged_data) == 'Village_nu'] <- 'village_number'
-  
+
   #Ensure that you only have to use the names of the columns
   attach(merged_data)
 
@@ -258,6 +277,7 @@ for(i in 1:n)
 #------------------------------------------------------------------------------------------------------------------------------
 #### Box and whisker plots with tests of significance for categorical environmental variables vs. ASP, as per Figure 4.1.4 ####
 #------------------------------------------------------------------------------------------------------------------------------  
+  
   #1) Read in data
   merged_data<-read.csv("vil_tables_for_analysis\\environmental_variables_1kmb_with_ASP.csv")
   
@@ -266,8 +286,9 @@ for(i in 1:n)
   #SOIL TEXTURE
   #------------
   
-  #a) Test for heteroscesdasticity
+  #a) Test for homogeneity of variance
   leveneTest(Adj_pw_Ascaris~texture_1km_4grp, merged_data)
+  
   # OUTPUT: Levene's Test for Homogeneity of Variance (center = median)
   #       Df F value  Pr(>F)  
   # group  3  4.2985 0.01705 *
@@ -297,7 +318,7 @@ for(i in 1:n)
   #Soil pH
   #-------
   
-  #a) Test for heteroscesdasticity
+  #a) Test for Homogeneity of Variance
   library(car)
   leveneTest(Adj_pw_Ascaris~ordered_ph, merged_data)
   
@@ -330,7 +351,7 @@ for(i in 1:n)
   #Landcover
   #-------------
   
-  #a) Test for heteroscesdasticity
+  #a) Test for homogeneity of Variance
   leveneTest(Adj_pw_Ascaris~landcover_assign_1km_pres, merged_data)
   
   # OUTPUT: Levene's Test for Homogeneity of Variance (center = median)
@@ -347,7 +368,7 @@ for(i in 1:n)
   #CONCLUSION: NO difference between groups, no need for post hoc test.
   
 
-  #3) Create boxplots for Ascaris ASP vs. each categorical variable. As per Figure 4.1.4. 
+  #3) Create boxplots for Ascaris ASP vs. each land attribute variable. As per Figure 4.1.4. 
   pdf("write_up\\figures\\ascaris_ASPvsLandvar_boxplots_with_significance_1810.pdf", width=6,height=9)
   par(mfrow = c(3, 1)) #For the pdf, create 3 rows and 1 column, to allow a series of boxplots on the one page
   par(oma=c(2,2,2,2),mar = c(7,8.5,2.3,8.5), cex=0.7) # Set margin of boxplot
@@ -416,7 +437,7 @@ for(i in 1:n)
           xlab = "",
           col="lightsteelblue") 
   
-  #Add letter
+  #Add letter (B)
   mtext(paste0(toupper(letters[2])), side = 3, adj = 0.02, 
         line = -1.5)
   
@@ -466,6 +487,7 @@ for(i in 1:n)
           xlab = "",
           col="lightsteelblue")
   
+  #Add letter (C)
   mtext(paste0(toupper(letters[3])), side = 3, adj = 0.02, 
         line = -1.5)
   

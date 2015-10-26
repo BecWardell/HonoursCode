@@ -1,9 +1,35 @@
+# Rebecca Wardell
 # Representative code for inferential analysis. All examples provided are shown for A. lumbricoides. 
+# First created: August- October 2015
+# Last updated: 25/10/2015
+
 #Examples include:
+#----------------
+
 #1) Univariate multilevel mixed-effects logistic regression analysis (Appendix C Table C.2.1)
+#--------------------------------------------------------------------------------------------
+    #This code is separated into analysis for continuous variables, and categorical variables. As such, continuous and categorical variables are first defined.
+    #A for loop is used to loop through the continuous variables, with a multilevel mixed-effects logistic regression model created to determine associations between
+    #each variable and the odds of A. lumbricoides infection. The ORs, 95% CIs, AIC and p value for each continuous variable is output to the one file 
+    #'continuous_var_uni_var_analysis_ASCARIS_09.10.csv'. For categorical variables, another for loop is used, with univariate associations for each variable instead
+    #output to separate files for each variable. 
+
 #2) Univariate multilevel mixed-effects logistic regression analysis for quadratic forms of continuous environmental variables (Appendix C Table C.2.2)
-#3) Multivariable multilevel mixed-effects logistic regression model, for final Ascaris model (Table 4.2.1)
+#------------------------------------------------------------------------------------------------------------------------------------------------------
+    #This code creates a function 'univariate_poly_betaAIC_ASCARIS.' When this function is called, it provides the beta coefficients, 95% CI for beta, 
+    #AIC, and p-value for associations between quadratic forms of each continuous environmental variable and A. lumbricoides infection. All the information is output
+    #to the one file, 'BETA_continuous_env_var_uni_var_analysis_POLY_ASCARIS.09.10.csv'
+
+#3) Multivariable multilevel mixed-effects logistic regression model, for final A. lumbricoides model (Table 4.2.1)
+#----------------------------------------------------------------------------------------------------------
+    #This code details the commands used to create the final chosen multilevel mixed-effects logistic regression model to explain A. lumbricoides distribution. 
+    #The model output (OR, 95% CI, p values) is saved to the file 'fit_asc_chosen_mod.3.3.10.csv'
+
 #4) Semivariogram analysis (Figure 4.2.1)
+#----------------------------------------
+    #This code shows how the semivariogram for A. lumbricoides was created. The code uses the final model residuals (from #3 above) and determines the average
+    #residual for each geographic location. The code then inspects the range in the latitude and longitude coordinates for the study participants to determine the
+    #lag distance. The semivariance is calculated using the variog command from the geoR package, and a plot of lag distance vs.semivariance created. 
 
 #### Preamble material ####
 
@@ -12,7 +38,7 @@ setwd("E:\\Project")
 
 #Install packages
 
-require(lme4) #Required fr multilevel modelling
+require(lme4) #Required for multilevel modelling
 library("lme4")
 require(compiler)
 library("compiler")
@@ -88,7 +114,7 @@ attach(dataset)
       file="output_files\\continuous_var_uni_var_analysis_ASCARIS_09.10.csv",append=TRUE,sep="")
     }
 
-#3) Categorical variables. For each categorical variable, a seperate output file will be produced
+#3) Categorical variables. For each categorical variable, a separate output file will be produced
   
     #Define which variables are non continuous, and put into list
     non_cont_var<-colnames(dataset[,c(17, 34, 55, 80, 56, 81, 57, 82, 58, 83, 59, 84)])
@@ -127,12 +153,12 @@ attach(dataset)
 ####Univariate multilevel mixed-effects logistic regression analysis for quadratic forms of continuous environmental variables (Appendix C Table C.2.2)####
 #----------------------------------------------------------------------------------------------------------------------------------------------------------
     
-    #1) Function which creates multilevel model with square quadratic term included for each continuous environmental variable, and outcome as probability of
-    #ascaris infection. Output is beta coefficient and 95% CI 
+    #1) Function which creates multilevel model with orthogonal quadratic term included for each continuous environmental variable, and outcome as probability of
+    #A. lumbricoides infection. Output is beta coefficient and 95% CI 
     
     univariate_poly_betaAIC_ASCARIS<-function(variable){
       
-      #Creates model, poly,2 refers to square polynomial term
+      #Creates model, poly,2 refers to orthogonal quadratic term
       fit<-glmer(ascaris_ye ~  poly(variable,2)+ (1| village/household), data=dataset,
                  family = binomial, control=glmerControl(optCtrl=list(maxfun=100000)))
       
@@ -165,10 +191,10 @@ attach(dataset)
     write.csv(out_b_asc_long, file= "output_files\\BETA_continuous_env_var_uni_var_analysis_POLY_ASCARIS.09.10.csv")
     
 #--------------------------------------------------------------------------------------------------------------
-####Multivariable multilevel mixed-effects logistic regression model, for final Ascaris model (Table 4.2.1)####
+####Multivariable multilevel mixed-effects logistic regression model, for final A. lumbricoides model (Table 4.2.1)####
 #--------------------------------------------------------------------------------------------------------------    
     
-    #Final multivariable multilevel mixed-effects logistic regression model for Ascaris
+    #Final multivariable multilevel mixed-effects logistic regression model for A. lumbricoides
     fit_asc_chosen_mod.3<-glmer(ascaris_ye ~ b1km_ele_div_100 + b1km_ast_slope+ I(ph_3_grp_pt) +
                                   I(loamY_pt) + I(woodY_1km)+ I(sex_female)+ I(grp_age_by)+
                                   (1| village/household), data=dataset,
@@ -192,7 +218,7 @@ attach(dataset)
     
   #1) Get residuals into useable format
     
-    #Get residuals from final ascaris model
+    #Get residuals from final A. lumbricoides model
     dataset_w_residuals<-cbind(dataset, sum_asc_fin_model$residuals)
     
     #Rename residual column as 'asc_mod_redisuals'
@@ -221,7 +247,7 @@ attach(dataset)
     #This says: give me a sequence from 0 to 0.15, and divide by 10. So the lag distance is 0.015
     breaks=seq(0, 0.15, l = 11)
     
-  #4) Calculate semivariance for ascaris
+  #4) Calculate semivariance for A. lumbricoides
     v1 <- variog(coords = ascaris_residual_table[,1:2], data = ascaris_residual_table[,3], breaks = breaks)
     v1.summary <- cbind(c(1:10), v1$v, v1$n)
     colnames(v1.summary) <- c("lag", "semi-variance", "# of pairs")
@@ -234,10 +260,10 @@ attach(dataset)
     #Reset counter
     j=1
     
-    #Plots ascaris semivariogram
+    #Plots A. lumbricoides semivariogram
     plot(v1, 
          type = "b", 
-         #    main = "Variogram: ascaris residuals",
+         #    main = "Variogram: A. lumbricoides residuals",
          ylim= c(0,0.3),
          xlim = c(0, 0.15),
          cex.axis=0.8,
